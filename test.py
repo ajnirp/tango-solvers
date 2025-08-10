@@ -41,13 +41,50 @@ testcases = [
             ((5, 0), (5, 1), "="),
         ],
     ),
+    (
+        [
+            [2,2,2,2,2,1],
+            [2,2,2,2,2,2],
+            [2,2,2,2,2,2],
+            [2,2,2,2,2,2],
+            [2,2,2,2,2,2],
+            [1,2,2,2,2,2],
+        ],
+        [
+            ((0, 0), (0, 1), "x"),
+            ((0, 0), (1, 0), "x"),
+            ((0, 1), (1, 1), "x"),
+            ((1, 1), (2, 1), "x"),
+            ((1, 2), (1, 3), "="),
+            ((1, 2), (2, 2), "x"),
+            ((1, 3), (2, 3), "="),
+            ((2, 0), (2, 1), "x"),
+            ((2, 0), (3, 0), "="),
+            ((2, 1), (3, 1), "="),
+            ((2, 3), (3, 3), "x"),
+            ((2, 4), (3, 4), "="),
+            ((2, 4), (2, 5), "x"),
+            ((2, 5), (3, 5), "x"),
+            ((3, 2), (3, 3), "="),
+            ((3, 2), (4, 2), "x"),
+            ((3, 3), (4, 3), "x"),
+            ((3, 5), (4, 5), "x"),
+            ((4, 4), (4, 5), "="),
+            ((4, 4), (5, 4), "="),
+            ((4, 5), (5, 5), "x"),
+        ],
+    ),
 ]
 
-for idx, testcase in enumerate(testcases):
-    cells, constraints = testcase
-    board = Board(cells=cells, constraints=constraints)
-    solver = Solver(board=board)
-    solver.solve()
-    print(f"Testcase {idx+1}")
-    board.print()
+for idx, testcase in enumerate(testcases[2:]):
+    grid, constraints = testcase
+    board = Board(grid=grid, constraints=constraints)
+    solver = Solver()
+    solve_result = solver.dfs_solve(board)
+    if not solve_result:
+        print(f"Testcase {idx+1}: could not solve")
+        board.print()
+    else:
+        print(f"Testcase {idx+1}")
+        solve_result.print()
     print()
