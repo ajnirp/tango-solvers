@@ -67,7 +67,6 @@ bool can_set(const int board[36], const int i, const int constraints[36], const 
         if (dr == 1) { _r = 0; _c = c; }
         int streak = 1, prev = -1;
         for (int j = 0; j < 6; j++, _r += dr, _c += dc) {
-            if (!inside(_r, _c)) { continue; }
             int curr = at(board, _r, _c);
             if (curr == 2 || curr != prev) { streak = 1; }
             else { streak++; }
@@ -187,7 +186,7 @@ int main(int argc, [[maybe_unused]] char* argv[argc+1]) {
                 { .from = 24, .to = 30, .equality = false, },
                 { .from = 29, .to = 35, .equality = false, },
             },
-            .num_constraints = 6,
+            .num_constraints = 7,
             .solution = "100101001101110010011010001101110010",
         },
         {
