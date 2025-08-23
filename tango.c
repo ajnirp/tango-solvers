@@ -96,7 +96,7 @@ bool can_set(const int board[36], const int i, const int constraints[36], const 
 }
 
 bool helper(int board[36], const int i, const int constraints[36]) {
-    if (i == 37) {
+    if (i == 36) {
         return true;
     }
     if (board[i] != 2) {
@@ -130,7 +130,6 @@ int adjacent(const int i, const int j) {
         (result == 1 || result == -1 || result == 6 || result == -6)
         ? result : 0;  // 0 if not adjacent
 }
-// 0: not col adjacent
 
 int find(const int haystack[], const int n, const int needle) {
     for (int i = 0; i < n; i++) {
