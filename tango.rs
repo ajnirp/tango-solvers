@@ -1,3 +1,12 @@
+// rustc -C opt-level=3 tango.rs; ./tango
+
+// Boards are stored as arrays of 36 ints.
+// 0 = sun, 1 = moon, 2 = blank square.
+// Constraints are stored as an array of 36 ints. Each element is an 8-bit
+// bitmask ABCDEFGH where A through D are the bits representing a "x" constraint
+// North, East, South, West, and E through H are the bits representing a "="
+// constraint North, East, South, West.
+
 struct Constraint {
     from: u8,
     to: u8,
@@ -11,10 +20,9 @@ struct Testcase {
 }
 
 fn print(board: &[u8; 36]) {
-    for r in 0usize..6 {
-        for c in 0usize..6 {
-            let i = r*6 + c;
-            print!("{}", board[i]);
+    for r in 0..6 {
+        for c in 0..6 {
+            print!("{}", board[r*6 + c]);
         }
         println!("");
     }
@@ -30,7 +38,7 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
     let c: usize = i%6;
 
     // no more than three in a row or column
-    for v in 0..1 {
+    for v in 0..2 {
         let dr = drs[v];
         let dc = dcs[v];
         // let dc = dcs[v];
@@ -49,7 +57,7 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
     }
 
     // three consecutive identical not allowed
-    for v in 0..1 {
+    for v in 0..2 {
         let dr = drs[v];
         let dc = dcs[v];
         let mut _r = r;
@@ -58,13 +66,11 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
         let mut streak = 1;
         let mut prev = 255u8;
         for _ in 0..6 {
-            if inside(_r, _c) {
-                let curr = at(board, _r, _c);
-                if curr == 2 || curr != prev { streak = 1; }
-                else { streak += 1; }
-                if streak == 3 { return false; }
-                prev = curr;
-            }
+            let curr = at(board, _r, _c);
+            if curr == 2 || curr != prev { streak = 1; }
+            else { streak += 1; }
+            if streak == 3 { return false; }
+            prev = curr;
             _r += dr;
             _c += dc;
         }
@@ -78,7 +84,7 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
     for j in 0..8 {
         let _nr = (r as i16) + _drs[j%4];
         let _nc = (c as i16) + _dcs[j%4];
-        if _nr <= 0 || _nc <= 0 { continue; }
+        if _nr < 0 || _nc < 0 { continue; }
         let nr = _nr as usize;
         let nc = _nc as usize;
         if !inside(nr, nc) { continue; }
@@ -100,7 +106,7 @@ fn helper(board: &mut [u8; 36], i: usize, constraints: &[u8; 36]) -> bool {
     if board[i] != 2 {
         return helper(board, i+1, constraints);
     }
-    for new in 0u8..2 {
+    for new in 0..2 {
         if can_set(board, i, constraints, new) {
             board[i] = new;
             if helper(board, i+1, constraints) {
@@ -132,14 +138,14 @@ fn adjacent(i: u8, j: u8) -> i8 {
 }
 
 fn parse_constraints(constraints: &Vec<Constraint>, result: &mut[u8; 36]) {
+    let adjacencies = [1i8, -1, 6, -6];
+    let from_shifts = [3u8, 1, 0, 2];
+    let to_shifts = [1u8, 3, 2, 0];
     for constraint in constraints.iter() {
         let adjacency = adjacent(constraint.from, constraint.to);
         if adjacency == 0 { continue; }
-        let adjacencies = [1i8, -1, 6, -6];
-        let from_shifts = [3u8, 1, 0, 2];
-        let to_shifts = [1u8, 3, 2, 0];
-        let index = adjacencies.iter().position(|&x| x == adjacency).unwrap_or(0);
-        if index == 0 { continue; }
+        let index = adjacencies.iter().position(|&x| x == adjacency).unwrap_or(255);
+        if index == 255 { continue; }
         let mut from_shift = from_shifts[index as usize];
         let mut to_shift = to_shifts[index as usize];
         if !constraint.eq {
@@ -152,15 +158,13 @@ fn parse_constraints(constraints: &Vec<Constraint>, result: &mut[u8; 36]) {
 }
 
 fn parse_board(input: &str, output: &mut [u8; 36]) {
-    let mut i = 0usize;
-    for c in input.chars() {
+    for (i, c) in input.chars().enumerate() {
         output[i] = c.to_digit(10).unwrap() as u8;
-        i += 1;
     }
 }
 
 fn identical(board1: &[u8; 36], board2: &[u8; 36]) -> bool {
-    for i in 0usize..36 {
+    for i in 0..36 {
         if board1[i] != board2[i] {
             return false;
         }
