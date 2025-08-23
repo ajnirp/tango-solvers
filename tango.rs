@@ -39,12 +39,9 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
 
     // no more than three in a row or column
     for v in 0..2 {
-        let dr = drs[v];
-        let dc = dcs[v];
-        // let dc = dcs[v];
+        let (dr, dc) = (drs[v], dcs[v]);
         let mut num_existing = 0;
-        let mut _r = r*dc;
-        let mut _c = c*dr;
+        let (mut _r, mut _c) = (r*dc, c*dr);
         for _ in 0..6 {
             let curr = at(board, _r, _c);
             if !(_r == r && _c == c) && curr == new {
@@ -58,17 +55,13 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
 
     // three consecutive identical not allowed
     for v in 0..2 {
-        let dr = drs[v];
-        let dc = dcs[v];
-        let mut _r = r;
-        let mut _c = 0;
-        if dr == 1 { _r = 0; _c = c; }
+        let (dr, dc) = (drs[v], dcs[v]);
+        let (mut _r, mut _c) = if dr == 0 { (r, 0) } else { (0, c)};
         let mut streak = 1;
         let mut prev = 255u8;
         for _ in 0..6 {
             let curr = at(board, _r, _c);
-            if curr == 2 || curr != prev { streak = 1; }
-            else { streak += 1; }
+            streak = if curr != 2 && curr == prev { streak + 1 } else { 1 };
             if streak == 3 { return false; }
             prev = curr;
             _r += dr;
@@ -85,8 +78,7 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
         let _nr = (r as i16) + _drs[j%4];
         let _nc = (c as i16) + _dcs[j%4];
         if _nr < 0 || _nc < 0 { continue; }
-        let nr = _nr as usize;
-        let nc = _nc as usize;
+        let (nr, nc) = (_nr as usize, _nc as usize);
         if !inside(nr, nc) { continue; }
         let rule = constraint & (1 << j);
         if rule == 0 { continue; }
@@ -163,15 +155,7 @@ fn parse_board(input: &str, output: &mut [u8; 36]) {
     }
 }
 
-fn identical(board1: &[u8; 36], board2: &[u8; 36]) -> bool {
-    for i in 0..36 {
-        if board1[i] != board2[i] {
-            return false;
-        }
-    }
-    true
-}
-
+// TODO: these should be tests not a main function
 fn main() {
     let testcases = vec![
         Testcase {
@@ -186,31 +170,66 @@ fn main() {
                 Constraint { from: 29, to: 35, eq: false, },
             ],
             solution: "100101001101110010011010001101110010",
-        }
+        },
+        Testcase {
+            board: "222222220022202212212202221122222222",
+            constraints: vec![
+                Constraint { from: 0, to: 1, eq: true, },
+                Constraint { from: 4, to: 5, eq: false, },
+                Constraint { from: 0, to: 6, eq: true, },
+                Constraint { from: 5, to: 11, eq: true, },
+                Constraint { from: 24, to: 30, eq: false, },
+                Constraint { from: 30, to: 31, eq: true, },
+                Constraint { from: 29, to: 35, eq: false, },
+                Constraint { from: 34, to: 35, eq: false, },
+            ],
+            solution: "001101010011101010110100001101110010",
+        },
+        Testcase {
+            board: "212222102222222222222222222210222212",
+            constraints: vec![
+                Constraint { from: 3, to: 9, eq: false, },
+                Constraint { from: 14, to: 15, eq: false, },
+                Constraint { from: 16, to: 17, eq: false, },
+                Constraint { from: 18, to: 19, eq: false, },
+                Constraint { from: 20, to: 21, eq: true, },
+                Constraint { from: 26, to: 32, eq: true, },
+            ],
+            solution: "011001100110011001101100100110010011",
+        },
+        Testcase {
+            board: "222222222222222202222120222020222212",
+            constraints: vec![
+                Constraint { from: 0, to: 1, eq: true, },
+                Constraint { from: 2, to: 8, eq: true, },
+                Constraint { from: 6, to: 12, eq: true, },
+                Constraint { from: 14, to: 20, eq: false, },
+                Constraint { from: 18, to: 19, eq: true, },
+            ],
+            solution: "110100010011001101110100101010001011",
+        },
     ];
 
     for (index, testcase) in testcases.iter().enumerate() {
-        let mut constraints = [0u8; 36];
-        parse_constraints(&testcase.constraints, &mut constraints);
-        let mut board = [0u8; 36];
-        let mut solution = [0u8; 36];
+        let (mut board, mut solution, mut constraints) = (
+            [0u8; 36], [0u8; 36], [0u8; 36],
+        );
         parse_board(&testcase.board, &mut board);
         parse_board(&testcase.solution, &mut solution);
+        parse_constraints(&testcase.constraints, &mut constraints);
 
-        print!("Testcase {}\n\nInput:\n", index+1);
-        print(&board);
-        println!("\nExpected:");
-        print(&solution);
-        println!("");
+        print!("Testcase {}: ", index+1);
 
         if !solve(&mut board, &constraints) {
             println!("Failure: could not solve");
-        } else if identical(&board, &solution) {
+        } else if board == solution {
             println!("Success");
         } else {
-            println!("Failure. Got:");
+            println!("Failure. Expected:");
+            print(&solution);
+            println!("Got:");
             print(&board);
         }
-        println!("");
+        println!("...");
     }
 }
